@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import DomainConstellation from './components/DomainConstellation';
 
 export function useScrollReveal() {
   useEffect(() => {
@@ -23,7 +22,7 @@ export function useScrollReveal() {
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
+    <footer id="footer" className="site-footer">
       <div className="site-shell">
         <div className="footer-top">
           <div className="footer-identity">
@@ -39,7 +38,7 @@ export function SiteFooter() {
           <div>
             <Link to="/">HOME</Link>
             <Link to="/about">ABOUT</Link>
-            <a href="#domains">EXPLORE</a>
+            <Link to="/about">EXPLORE</Link>
           </div>
           <span>MADE FOR THE CURIOUS</span>
         </div>
@@ -50,7 +49,7 @@ export function SiteFooter() {
 
 export default function JointHomepage() {
   useScrollReveal();
-  /* The authored hero was removed: the immersive scene above now opens the
-     page, so the domain explorer follows the scene directly. */
-  return <DomainConstellation />;
+  /* The domain explorer is retired: the immersive scene now owns the homepage,
+     and the six domains live on /about. Footer and reveal logic remain. */
+  return null;
 }

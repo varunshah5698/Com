@@ -38,12 +38,8 @@ test('the home route opens with the immersive scene and no authored hero', () =>
   assert.doesNotMatch(homeMarkup, /hero-kicker|hero-description/);
 });
 
-test('the domains section is present and keeps its tab semantics', () => {
-  assert.match(homeMarkup, /id="domains"/);
-  assert.match(homeMarkup, /Follow what/i);
-  assert.match(homeMarkup, /interests you/i);
-  assert.match(homeMarkup, /role="tablist"/);
-  assert.match(homeMarkup, /role="tab"/);
+test('the retired domain explorer stays off the homepage', () => {
+  assert.doesNotMatch(homeMarkup, /id="domains"|role="tablist"|domain-tab|Follow what/i);
 });
 
 test('the immersive NSDC x INFORMATRIX experience is mounted with a meaningful accessible name', () => {

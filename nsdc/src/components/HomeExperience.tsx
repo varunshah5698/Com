@@ -11,7 +11,7 @@ import '@designcodeio/threeui/style.css';
 export default function HomeExperience() {
   return (
     <>
-      <a className="experience-skip" href="#domains">
+      <a className="experience-skip" href="#footer">
         Skip the immersive scene — go to site content
       </a>
       <section className="experience" aria-label="NSDC × INFORMATRIX immersive introduction">
