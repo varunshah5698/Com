@@ -60,17 +60,13 @@ function PageHero({ eyebrow, title, lead, stat }: { eyebrow: string; title: Reac
   );
 }
 
-function SectionHead({ kicker, title, href, hrefLabel }: { kicker: string; title: ReactNode; href?: string; hrefLabel?: string }) {
+function SectionHead({ kicker, title, meta }: { kicker: string; title: ReactNode; meta?: string }) {
   return (
     <div className="sec-head reveal">
       <p className="ph-kicker"><i /> {kicker}</p>
       <div className="sec-head-row">
         <h2 className="section-title">{title}</h2>
-        {href && (
-          <a className="sec-link" href={href} target="_blank" rel="noopener noreferrer">
-            {hrefLabel} <ArrowUpRight size={15} aria-hidden="true" />
-          </a>
-        )}
+        {meta && <span className="sec-meta">{meta}</span>}
       </div>
     </div>
   );
@@ -114,7 +110,7 @@ export function AboutPage() {
       />
       <section className="page-section" aria-label="Who we are">
         <div className="site-shell">
-          <SectionHead kicker="WHO WE ARE" title={<>The committee, <em>in three parts.</em></>} />
+          <SectionHead kicker="WHO WE ARE" title={<>The committee, <em>in three parts.</em></>} meta="3 PILLARS" />
           <div className="pillar-grid">
             {pillars.map(p => (
               <article className="pillar glass reveal" key={p.n}>
@@ -128,7 +124,7 @@ export function AboutPage() {
       </section>
       <section className="page-section page-section--alt" aria-label="The six domains">
         <div className="site-shell">
-          <SectionHead kicker="THE MAP" title={<>Six domains, <em>one community.</em></>} />
+          <SectionHead kicker="THE MAP" title={<>Six domains, <em>one community.</em></>} meta="6 DOMAINS" />
           <ul className="domain-tiles">
             {domains.map(([name, desc], i) => (
               <li className="domain-tile reveal" key={name}>
@@ -149,16 +145,16 @@ export function AboutPage() {
 
 /* ----------------------------------------------------------------- events */
 const FEATURED_EVENTS = [
-  { id: 'hackops', name: 'HackOps', note: 'Hackathon — build through the night with the committee.', image: '/events/hackops.webp', alt: 'HackOps event artwork' },
-  { id: 'technograd', name: 'Technograd', note: 'The committee\u2019s flagship technology gradation event — winners celebrated on stage.', image: '/events/technograd.webp', alt: 'Technograd event artwork' },
+  { id: 'hackops', name: 'HackOps', type: 'Hackathon', note: 'Build through the night with the committee — teams, mentors and a demo floor at dawn.', image: '/events/hackops.webp', alt: 'HackOps event artwork' },
+  { id: 'technograd', name: 'Technograd', type: 'Flagship', note: 'The committee\u2019s flagship technology gradation event — projects judged, winners celebrated on stage.', image: '/events/technograd.webp', alt: 'Technograd event artwork' },
 ];
 
 const ARCHIVE_EVENTS = [
-  { id: 'technograd-winners', name: 'Technograd — Winners', note: 'Winners celebrated on stage at Technograd.', image: '/globe/technograd-winners.jpg', alt: 'Technograd winners on stage' },
-  { id: 'seminar-audience', name: 'Seminars', note: 'A full seminar room during a committee session.', image: '/globe/seminar-audience.jpg', alt: 'Audience at a committee seminar' },
-  { id: 'synergy', name: 'Synergy', note: 'Archive — the synergy of data and building.', image: '/globe/previous/synergy.jpg', alt: 'Synergy event artwork' },
-  { id: 'design-dojo', name: 'Design Dojo', note: 'Archive — design practice, session after session.', image: '/globe/previous/design-dojo.jpg', alt: 'Design Dojo event artwork' },
-  { id: 'inauguration', name: 'Inauguration', note: 'Archive — where the chapter began.', image: '/globe/previous/inauguration.jpg', alt: 'Inauguration event artwork' },
+  { id: 'technograd-winners', name: 'Technograd — Winners', type: 'Awards', note: 'Winners celebrated on stage at Technograd.', image: '/globe/technograd-winners.jpg', alt: 'Technograd winners on stage' },
+  { id: 'seminar-audience', name: 'Seminars', type: 'Series', note: 'A full seminar room during a committee session.', image: '/globe/seminar-audience.jpg', alt: 'Audience at a committee seminar' },
+  { id: 'synergy', name: 'Synergy', type: 'Hackathon', note: 'The synergy of data and building, from earlier editions.', image: '/globe/previous/synergy.jpg', alt: 'Synergy event artwork' },
+  { id: 'design-dojo', name: 'Design Dojo', type: 'Workshop', note: 'Design practice, session after session.', image: '/globe/previous/design-dojo.jpg', alt: 'Design Dojo event artwork' },
+  { id: 'inauguration', name: 'Inauguration', type: 'Ceremony', note: 'Where the chapter began.', image: '/globe/previous/inauguration.jpg', alt: 'Inauguration event artwork' },
 ];
 
 export function EventsPage() {
@@ -174,15 +170,17 @@ export function EventsPage() {
       />
       <section className="page-section" aria-label="Featured events">
         <div className="site-shell">
-          <SectionHead kicker="FEATURED" title={<>The two big <em>nights.</em></>} />
+          <SectionHead kicker="FEATURED" title={<>The two big <em>nights.</em></>} meta="2 EVENTS" />
           <div className="event-features">
-            {FEATURED_EVENTS.map(ev => (
+            {FEATURED_EVENTS.map((ev, i) => (
               <article className="event-feature reveal" key={ev.id}>
                 <div className="ef-media">
                   <img src={ev.image} alt={ev.alt} loading="lazy" decoding="async" />
                   <span className="ef-chip">FEATURED</span>
+                  <span className="ef-index">{String(i + 1).padStart(2, '0')}</span>
                 </div>
                 <div className="ef-copy">
+                  <div className="ef-meta"><span>{ev.type}</span><span>ARCHIVE</span></div>
                   <h3>{ev.name}</h3>
                   <p>{ev.note}</p>
                 </div>
@@ -193,11 +191,12 @@ export function EventsPage() {
       </section>
       <section className="page-section page-section--alt" aria-label="Event archive">
         <div className="site-shell">
-          <SectionHead kicker="FROM THE ARCHIVE" title={<>Documented <em>editions.</em></>} />
+          <SectionHead kicker="FROM THE ARCHIVE" title={<>Documented <em>editions.</em></>} meta="5 RECORDS" />
           <div className="event-mosaic">
             {ARCHIVE_EVENTS.map((ev, i) => (
               <figure className={`mosaic-card reveal${i === 0 ? ' mosaic-lead' : ''}`} key={ev.id}>
                 <img src={ev.image} alt={ev.alt} loading="lazy" decoding="async" />
+                <span className="mc-type">{ev.type.toUpperCase()}</span>
                 <figcaption>
                   <strong>{ev.name}</strong>
                   <span>{ev.note}</span>
@@ -231,7 +230,7 @@ export function ProjectsPage() {
       />
       <section className="page-section" aria-label="Project archive highlights">
         <div className="site-shell">
-          <SectionHead kicker="STUDENT BUILDS" title={<>From the <em>workshop.</em></>} />
+          <SectionHead kicker="STUDENT BUILDS" title={<>From the <em>workshop.</em></>} meta="4 BUILDS" />
           <div className="project-grid">
             {projects.map(project => (
               <article className="project-card glass spot-host reveal" key={project.index}>
@@ -258,7 +257,7 @@ export function ProjectsPage() {
       </section>
       <section className="page-section page-section--alt" aria-label="Committee reading">
         <div className="site-shell">
-          <SectionHead kicker="FROM THE COMMITTEE BLOG" title={<>Field <em>notes.</em></>} />
+          <SectionHead kicker="FROM THE COMMITTEE BLOG" title={<>Field <em>notes.</em></>} meta="3 NOTES" />
           <ul className="insight-list">
             {insights.map(insight => (
               <li className="reveal" key={insight.href}>
@@ -348,7 +347,7 @@ export function ContactPage() {
       />
       <section className="page-section" aria-label="Contact channels">
         <div className="site-shell">
-          <SectionHead kicker="CHANNELS" title={<>Three ways <em>in.</em></>} />
+          <SectionHead kicker="CHANNELS" title={<>Three ways <em>in.</em></>} meta="3 CHANNELS" />
           <div className="contact-grid">
             <a className="contact-card glass reveal" href="https://djs-infomatrix.vercel.app" target="_blank" rel="noopener noreferrer">
               <span className="cc-icon"><Globe size={22} aria-hidden="true" /></span>
