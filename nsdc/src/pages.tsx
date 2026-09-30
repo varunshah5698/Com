@@ -19,10 +19,10 @@ export function ScrollToTop() {
   return null;
 }
 
-/* Chapter numerals mirror the immersive scene's chapters: the site reads as
-   one continuous walk, and every page is a stop on it. */
+/* Chapter numerals follow the nav order: every page is a stop on the walk,
+   numbered 01–05 the way visitors meet them. */
 const CHAPTER: Record<string, string> = {
-  about: '01', projects: '02', events: '03', team: '04', contact: '05',
+  about: '01', events: '02', projects: '03', team: '04', contact: '05',
 };
 
 function PageHero({ eyebrow, title, lead, stat }: { eyebrow: string; title: ReactNode; lead: string; stat?: string }) {
@@ -149,7 +149,7 @@ export function EventsPage() {
   return (
     <main id="main">
       <PageHero
-        eyebrow="CHAPTER 03 · EVENTS"
+        eyebrow="CHAPTER 02 · EVENTS"
         title={<>Gatherings on <em>the path.</em></>}
         lead="Sessions, seminars and build nights from the committee. Dates, venues and registration move with each semester — the official committee channels carry the current ones."
         stat="2 featured gatherings · 5 archive records"
@@ -205,7 +205,7 @@ export function ProjectsPage() {
   return (
     <main id="main">
       <PageHero
-        eyebrow="CHAPTER 02 · PROJECTS"
+        eyebrow="CHAPTER 03 · PROJECTS"
         title={<>Ideas, made <em>real.</em></>}
         lead="Selected student builds from the Informatrix archive — each one a walk through one of the six domains. The full archive lives on the official Informatrix site."
         stat="4 featured builds · 3 field notes"
