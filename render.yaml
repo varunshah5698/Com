@@ -1,0 +1,16 @@
+# Render Blueprint: the Vite app lives in nsdc/, not the repo root.
+# Create/redeploy via Render → New + → Blueprint → this repository.
+services:
+  - type: web
+    name: nsdc-informatrix
+    runtime: static
+    rootDir: nsdc
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    pullRequestPreviewsEnabled: true
+    routes:
+      # SPA fallback: serve index.html for client-side routes (/about, /events, …).
+      # Real files (/, /landing-pages/kage.html, assets) are matched first.
+      - type: rewrite
+        source: /.*
+        destination: /index.html
