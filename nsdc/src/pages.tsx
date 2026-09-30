@@ -19,6 +19,24 @@ export function ScrollToTop() {
   return null;
 }
 
+/* Linear-style spotlight: a violet glow tracks the cursor across card surfaces. */
+function useSpotlight<T extends HTMLElement>() {
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const card = (e.currentTarget as T);
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    };
+    document.querySelectorAll<HTMLElement>('.spot-host').forEach(card => {
+      card.addEventListener('pointermove', move as EventListener);
+    });
+    return () => document.querySelectorAll<HTMLElement>('.spot-host').forEach(card => {
+      card.removeEventListener('pointermove', move as EventListener);
+    });
+  }, []);
+}
+
 /* Chapter numerals follow the nav order: every page is a stop on the walk,
    numbered 01–05 the way visitors meet them. */
 const CHAPTER: Record<string, string> = {
@@ -99,7 +117,7 @@ export function AboutPage() {
           <SectionHead kicker="WHO WE ARE" title={<>The committee, <em>in three parts.</em></>} />
           <div className="pillar-grid">
             {pillars.map(p => (
-              <article className="pillar reveal" key={p.n}>
+              <article className="pillar glass reveal" key={p.n}>
                 <span className="pillar-n">{p.n}</span>
                 <h3>{p.title}</h3>
                 <p>{p.body}</p>
@@ -202,6 +220,7 @@ export function EventsPage() {
 export function ProjectsPage() {
   useRouteTitle('Projects');
   useScrollReveal();
+  useSpotlight<HTMLElement>();
   return (
     <main id="main">
       <PageHero
@@ -215,8 +234,9 @@ export function ProjectsPage() {
           <SectionHead kicker="STUDENT BUILDS" title={<>From the <em>workshop.</em></>} />
           <div className="project-grid">
             {projects.map(project => (
-              <article className="project-card reveal" key={project.index}>
+              <article className="project-card glass spot-host reveal" key={project.index}>
                 <span className="pc-glow" aria-hidden="true" />
+                <span className="spot" aria-hidden="true" />
                 <div className="project-copy">
                   <div className="project-meta">
                     <span className="pc-cat">{project.category}</span>
@@ -242,7 +262,7 @@ export function ProjectsPage() {
           <ul className="insight-list">
             {insights.map(insight => (
               <li className="reveal" key={insight.href}>
-                <a href={insight.href} target="_blank" rel="noopener noreferrer">
+                <a className="glass" href={insight.href} target="_blank" rel="noopener noreferrer">
                   <span className="insight-cat">{insight.category}</span>
                   <strong>{insight.title}</strong>
                   <span className="insight-meta">{insight.author} · {insight.date} · {insight.readTime}</span>
@@ -276,7 +296,7 @@ export function TeamPage() {
       />
       <section className="page-section" aria-label="Team directory">
         <div className="site-shell team-panel-wrap">
-          <div className="team-panel reveal">
+          <div className="team-panel glass reveal">
             <div className="tp-copy">
               <span className="tp-icon"><Users size={26} aria-hidden="true" /></span>
               <h2>One roster, kept <em>honest.</em></h2>
@@ -330,19 +350,19 @@ export function ContactPage() {
         <div className="site-shell">
           <SectionHead kicker="CHANNELS" title={<>Three ways <em>in.</em></>} />
           <div className="contact-grid">
-            <a className="contact-card reveal" href="https://djs-infomatrix.vercel.app" target="_blank" rel="noopener noreferrer">
+            <a className="contact-card glass reveal" href="https://djs-infomatrix.vercel.app" target="_blank" rel="noopener noreferrer">
               <span className="cc-icon"><Globe size={22} aria-hidden="true" /></span>
               <strong>Informatrix website</strong>
               <span>djs-infomatrix.vercel.app — projects, blogs and the official directory.</span>
               <span className="cc-go">Visit <ArrowUpRight size={14} aria-hidden="true" /></span>
             </a>
-            <a className="contact-card reveal" href="https://github.com/DJS-INFOMATRIX" target="_blank" rel="noopener noreferrer">
+            <a className="contact-card glass reveal" href="https://github.com/DJS-INFOMATRIX" target="_blank" rel="noopener noreferrer">
               <span className="cc-icon"><Github size={22} aria-hidden="true" /></span>
               <strong>GitHub</strong>
               <span>github.com/DJS-INFOMATRIX — the committee's public code.</span>
               <span className="cc-go">Browse <ArrowUpRight size={14} aria-hidden="true" /></span>
             </a>
-            <div className="contact-card reveal">
+            <div className="contact-card glass reveal">
               <span className="cc-icon"><MapPin size={22} aria-hidden="true" /></span>
               <strong>Campus</strong>
               <span>Dwarkadas J. Sanghvi College of Engineering, Mumbai — AI &amp; Data Science department.</span>
