@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laser Spectrum: Design System v0.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Single source of truth: the tokens shown in the TOKENS section are read from this block. -->
+<style id="tokens">
+:root{
+  /* surface */
+  --void-950:#05050A; --void-900:#0A0A10; --void-800:#12121A; --void-700:#1B1B26;
+  --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.28);
+
+  /* text */
+  --photon:#F5F5F2; --mist:#A4A4B8; --dim:#7C7C92;
+
+  /* spectrum (light only: beams, glows, one accent) */
+  --ultraviolet:#7443FF; --ion:#2CA6FF; --plasma:#4DE3D0;
+  --amber:#FFC247; --ember:#FF7A1A; --rose:#FF4FA3;
+
+  /* semantic */
+  --success:var(--plasma); --warning:var(--amber);
+  --error:#FF5A5F; --info:var(--ion); --focus:var(--ion);
+
+  /* type */
+  --font-display:"Inter Tight","Inter","Helvetica Neue",Arial,sans-serif;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  /* space (4px base) */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px;
+  --s-6:32px; --s-7:48px; --s-8:64px; --s-9:96px; --s-10:128px;
+
+  /* shape */
+  --radius:0; --radius-pill:999px; --border:1px solid var(--line);
+
+  /* glow (replaces drop shadows) */
+  --glow-ion:0 0 0 1px rgba(44,166,255,.55),0 0 36px rgba(44,166,255,.35);
+  --glow-ember:0 0 0 1px rgba(255,122,26,.55),0 0 36px rgba(255,122,26,.35);
+  --glow-ultraviolet:0 0 0 1px rgba(116,67,255,.65),0 0 36px rgba(116,67,255,.45);
+
+  /* motion */
+  --dur-instant:90ms; --dur-fast:160ms; --dur-base:280ms;
+  --dur-slow:560ms; --dur-scene:1200ms;
+  --ease-snap:cubic-bezier(.2,.8,.2,1);
+  --ease-warp:cubic-bezier(.7,0,.3,1);
+  --ease-beam:linear;
+
+  /* beam speed (depth units per second) */
+  --beam-idle:.12; --beam-cruise:.45; --beam-warp:2;
+
+  /* layout (breakpoints: 480 / 768 / 1024 / 1280 / 1536) */
+  --cols:12; --gutter:24px; --margin:clamp(20px,4vw,64px); --max:1440px;
+}
+</style>
+
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 72px);scroll-behavior:smooth;background:var(--void-950)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--void-950);color:var(--photon);font:400 17px/1.6 var(--font-body);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img,svg,canvas{display:block;max-width:100%}
+h1,h2,h3,p,ul,ol,dl,dd,figure{margin:0;padding:0}
+ul,ol{list-style:none}
+a{color:inherit}
+::selection{background:var(--ion);color:var(--void-950)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+
+/* film grain, lifted from the black-and-white reference */
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.06;
+  background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* type roles */
+.lbl{font:500 13px/1.3 var(--font-mono);letter-spacing:.08em;text-transform:uppercase}
+.micro{font:400 12px/1.3 var(--font-mono);letter-spacing:.1em;text-transform:uppercase}
+.t-display-xl{font:500 clamp(52px,9.5vw,150px)/.9 var(--font-display);letter-spacing:-.035em;text-transform:uppercase}
+.t-display{font:500 clamp(44px,7vw,104px)/.94 var(--font-display);letter-spacing:-.03em;text-transform:uppercase}
+.t-h1{font:500 clamp(34px,4.6vw,64px)/.98 var(--font-display);letter-spacing:-.025em;text-transform:uppercase}
+.t-h2{font:500 clamp(26px,3vw,40px)/1.05 var(--font-display);letter-spacing:-.02em;text-transform:uppercase}
+.t-h3{font:500 24px/1.15 var(--font-display);letter-spacing:-.01em}
+.t-body-l{font:400 20px/1.55 var(--font-body)}
+.t-small{font:400 14px/1.5 var(--font-body)}
+.muted{color:var(--mist)}
+
+/* shell */
+.wrap{max-width:var(--max);margin-inline:auto;padding-inline:var(--margin)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;height:56px;background:rgba(5,5,10,.82);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:var(--border)}
+.bar .wrap{height:100%;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.mark{font:500 16px/1 var(--font-display);letter-spacing:-.01em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+.nav{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;padding:8px 0}
+.nav::-webkit-scrollbar{display:none}
+.nav a{text-decoration:none;color:var(--mist);white-space:nowrap;transition:color var(--dur-fast) var(--ease-snap)}
+.nav a:hover{color:var(--photon)}
+
+.btn{font:500 13px/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:14px 18px;min-height:44px;
+  background:transparent;color:var(--photon);border:1px solid var(--line-strong);border-radius:var(--radius);cursor:pointer;
+  transition:background var(--dur-fast) var(--ease-snap),border-color var(--dur-fast) var(--ease-snap),color var(--dur-fast) var(--ease-snap)}
+.btn:hover{border-color:var(--photon)}
+.btn.is-on{background:var(--photon);color:var(--void-950);border-color:var(--photon)}
+
+/* hero */
+.hero{position:relative;min-height:calc(100svh - 56px);display:flex;align-items:flex-end;overflow:hidden;background:var(--void-950)}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,rgba(5,5,10,.94) 0%,rgba(5,5,10,.72) 34%,rgba(5,5,10,0) 68%),
+             linear-gradient(0deg,rgba(5,5,10,.92) 0%,rgba(5,5,10,0) 46%)}
+.hero .wrap{position:relative;z-index:2;width:100%;padding-block:var(--s-8)}
+.hero__tag{color:var(--mist);margin-bottom:var(--s-5)}
+.hero h1{max-width:12ch}
+.hero p{max-width:46ch;margin-top:var(--s-6);color:var(--mist)}
+.hero__ctl{position:absolute;z-index:2;right:var(--margin);bottom:var(--s-8)}
+@media (max-width:700px){
+  .hero::before{background:linear-gradient(0deg,rgba(5,5,10,.96) 0%,rgba(5,5,10,.8) 45%,rgba(5,5,10,0) 80%)}
+  .hero__ctl{position:static;margin-top:var(--s-5)}
+}
+
+/* sections: label left, content right (from the reference layout) */
+.sec{border-top:var(--border);padding-block:var(--s-9)}
+.sec__grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gutter);row-gap:var(--s-6)}
+.sec__label{grid-column:1 / 3;color:var(--mist);padding-top:.6em}
+.sec__body{grid-column:3 / 13;min-width:0}
+.sec__body > * + *{margin-top:var(--s-7)}
+.sec__intro{max-width:62ch;color:var(--mist)}
+@media (max-width:900px){.sec__label,.sec__body{grid-column:1 / -1}.sec{padding-block:var(--s-8)}}
+
+/* principles */
+.rules > li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:var(--gutter);padding-block:var(--s-5);border-top:var(--border)}
+.rules > li:last-child{border-bottom:var(--border)}
+.rules p{color:var(--mist);max-width:58ch}
+@media (max-width:700px){.rules > li{grid-template-columns:1fr;gap:var(--s-2)}}
+
+/* color */
+.strip{height:6px;background:linear-gradient(90deg,var(--ultraviolet),var(--ion),var(--plasma),var(--amber),var(--ember),var(--rose));box-shadow:0 0 28px rgba(44,166,255,.35),0 0 60px rgba(255,122,26,.18)}
+.group > .lbl{color:var(--mist);margin-bottom:var(--s-4)}
+.swgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:var(--s-4)}
+.sw{min-height:168px;padding:var(--s-4);display:flex;flex-direction:column;justify-content:space-between;border:var(--border)}
+.sw .name{font:500 22px/1.1 var(--font-display);letter-spacing:-.01em;text-transform:uppercase}
+.sw dl{display:grid;gap:2px}
+.sw dd.role{font:400 13px/1.35 var(--font-body);opacity:.86;margin-top:var(--s-2)}
+.grade{display:inline-block;margin-top:var(--s-2);padding:2px 6px;border:1px solid currentColor}
+.budget{display:flex;height:44px;border:var(--border)}
+.budget > div{display:flex;align-items:center;padding-inline:var(--s-3);white-space:nowrap;overflow:hidden}
+.pairs{border-top:var(--border)}
+.pair{display:grid;grid-template-columns:96px minmax(0,1fr) 88px;gap:var(--s-4);align-items:center;padding:var(--s-3) 0;border-bottom:var(--border)}
+.pair .aa{width:96px;height:56px;display:grid;place-items:center;font:500 24px/1 var(--font-display);border:var(--border)}
+.pair .use{color:var(--mist)}
+.pair .ratio{text-align:right}
+
+/* type */
+.trow{display:grid;grid-template-columns:200px minmax(0,1fr);gap:var(--s-5);padding-block:var(--s-5);border-top:var(--border);align-items:baseline}
+.trow:last-child{border-bottom:var(--border)}
+.trow .meta{display:grid;gap:2px;color:var(--mist)}
+.trow .meta .micro{color:var(--dim);text-transform:none;letter-spacing:.02em}
+.trow .sample{min-width:0;overflow-wrap:anywhere}
+@media (max-width:700px){.trow{grid-template-columns:1fr;gap:var(--s-3)}}
+.fam{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s-4)}
+.fam > div{border:var(--border);padding:var(--s-5);min-height:190px;display:flex;flex-direction:column;justify-content:space-between}
+.fam .big{font-size:64px;line-height:1}
+@media (max-width:900px){.fam{grid-template-columns:1fr}}
+
+/* lists and rules */
+.plain > li{padding-block:var(--s-3);border-top:var(--border);color:var(--mist)}
+.plain > li:last-child{border-bottom:var(--border)}
+.plain b{color:var(--photon);font-weight:500}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-6)}
+@media (max-width:800px){.cols2{grid-template-columns:1fr}}
+.cols2 h3{margin-bottom:var(--s-3)}
+
+/* spacing */
+.space li{display:grid;grid-template-columns:72px 64px minmax(0,1fr);gap:var(--s-4);align-items:center;padding-block:6px}
+.space .bar-s{height:14px;background:rgba(255,255,255,.14);border:1px solid var(--line-strong)}
+.space .use{color:var(--dim)}
+
+/* layout wireframe */
+.wire{position:relative;border:var(--border);padding:var(--s-5);overflow:hidden}
+.wire__cols{position:absolute;inset:0;padding-inline:var(--s-5);display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gutter);pointer-events:none}
+.wire__cols i{background:rgba(255,255,255,.035);border-inline:1px solid rgba(255,255,255,.05)}
+.wire__blocks{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gutter);min-height:260px;align-items:start}
+.wire__blocks > div{border:1px solid var(--line-strong);padding:var(--s-3);background:rgba(5,5,10,.7);color:var(--mist)}
+.b-label{grid-column:1 / 3;min-height:56px}
+.b-head{grid-column:3 / 9;min-height:200px}
+.b-body{grid-column:9 / 13;min-height:120px}
+@media (max-width:640px){.wire__blocks > div{grid-column:1 / -1}.wire__cols{display:none}}
+
+/* shape and depth */
+.panels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s-5)}
+.panel{min-height:150px;padding:var(--s-5);background:var(--void-900);display:flex;flex-direction:column;justify-content:space-between}
+.panel.hair{border:var(--border)}
+.panel.g-ion{box-shadow:var(--glow-ion)}
+.panel.g-ember{box-shadow:var(--glow-ember)}
+.panel.g-uv{box-shadow:var(--glow-ultraviolet)}
+@media (max-width:800px){.panels{grid-template-columns:1fr}}
+
+/* icons */
+.icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:var(--s-4)}
+.icon{border:var(--border);padding:var(--s-5) var(--s-4) var(--s-4);display:grid;gap:var(--s-5);justify-items:start}
+.icon svg{width:32px;height:32px;fill:none;stroke:var(--photon);stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter}
+
+/* motion demo */
+.stage{position:relative;aspect-ratio:16/7;border:var(--border);overflow:hidden;background:var(--void-950)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.stage .read{position:absolute;left:var(--s-4);bottom:var(--s-4);color:var(--mist);background:rgba(5,5,10,.7);padding:6px 10px}
+@media (max-width:700px){.stage{aspect-ratio:4/3}}
+.seg{display:flex;flex-wrap:wrap;gap:var(--s-2);margin-top:var(--s-4)}
+.tok{width:100%;border-collapse:collapse}
+.tok th,.tok td{text-align:left;padding:var(--s-3) var(--s-4) var(--s-3) 0;border-top:var(--border);vertical-align:top;font-weight:400}
+.tok th{color:var(--mist);font:500 13px/1.3 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;border-top:0}
+.tok td:first-child{font:400 14px/1.4 var(--font-mono);white-space:nowrap}
+.tok td{color:var(--mist)}
+.tok-wrap{overflow-x:auto}
+
+/* accessibility demo */
+.legi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-5)}
+@media (max-width:800px){.legi{grid-template-columns:1fr}}
+.legi figure{border:var(--border)}
+.legi .art{position:relative;min-height:170px;padding:var(--s-5);display:flex;align-items:center;overflow:hidden;
+  background:linear-gradient(112deg,transparent 30%,rgba(255,122,26,.95) 44%,#fff 50%,rgba(44,166,255,.95) 56%,transparent 70%),var(--void-950)}
+.legi .art p{position:relative;z-index:1;font:500 26px/1.1 var(--font-display);letter-spacing:-.02em;text-transform:uppercase;max-width:14ch}
+.legi .art.scrim::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,5,10,.94) 0%,rgba(5,5,10,.78) 46%,rgba(5,5,10,.15) 100%)}
+.legi figcaption{padding:var(--s-3) var(--s-4);border-top:var(--border);display:flex;gap:var(--s-3);align-items:baseline}
+.tag{padding:2px 6px;border:1px solid currentColor}
+.tag.ok{color:var(--success)}
+.tag.no{color:var(--error)}
+
+/* voice */
+.say{display:grid;grid-template-columns:140px minmax(0,1fr) minmax(0,1fr);gap:var(--s-5);padding-block:var(--s-4);border-top:var(--border);align-items:start}
+.say:last-child{border-bottom:var(--border)}
+.say .ctx{color:var(--mist)}
+.say .yes,.say .no{display:grid;gap:var(--s-2)}
+.say .no p{color:var(--mist)}
+@media (max-width:800px){.say{grid-template-columns:1fr;gap:var(--s-3)}}
+.pillars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s-5)}
+.pillars > div{border-top:1px solid var(--photon);padding-top:var(--s-3)}
+.pillars p{color:var(--mist);margin-top:var(--s-2);font-size:15px;line-height:1.5}
+@media (max-width:900px){.pillars{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* tokens code */
+pre.code{margin:0;padding:var(--s-5);background:var(--void-900);border:var(--border);overflow:auto;max-height:520px;
+  font:400 13px/1.6 var(--font-mono);color:var(--mist);tab-size:2}
+.row-end{display:flex;justify-content:space-between;align-items:center;gap:var(--s-4);flex-wrap:wrap}
+
+footer{border-top:var(--border);padding-block:var(--s-7);color:var(--mist)}
+
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.01ms!important}}
+</style>
+</head>
+
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="mark" href="#top">Tech Committee</a>
+    <nav class="nav lbl" aria-label="Sections">
+      <a href="#principles">Principles</a>
+      <a href="#color">Color</a>
+      <a href="#type">Type</a>
+      <a href="#layout">Layout</a>
+      <a href="#shape">Shape</a>
+      <a href="#motion">Motion</a>
+      <a href="#access">Access</a>
+      <a href="#voice">Voice</a>
+      <a href="#tokens-sec">Tokens</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero" aria-label="Introduction">
+  <canvas id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <p class="hero__tag lbl">\ Design system v0.1, rough draft</p>
+    <h1 class="t-display-xl">Light is the only color.</h1>
+    <p class="t-body-l">Foundations, principles and guidelines for the college tech committee website. Black surfaces, spectrum light, loud type.</p>
+  </div>
+  <div class="hero__ctl">
+    <button class="btn" id="motionBtn" type="button" aria-pressed="false">Pause beams</button>
+  </div>
+</section>
+
+<!-- PRINCIPLES -->
+<section class="sec" id="principles">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Principles</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Five rules.</h2>
+      <ol class="rules">
+        <li><h3 class="t-h3">Light is the only color.</h3><p>Surfaces stay black and off-white. Spectrum color appears only as light: beams, glows and one accent action. If something is colored and isn't glowing, question it.</p></li>
+        <li><h3 class="t-h3">Black is a stage.</h3><p>Beams move behind. Content holds still in front. Nobody should have to chase text through motion.</p></li>
+        <li><h3 class="t-h3">Type does the heavy lifting.</h3><p>Big uppercase headlines and small mono labels carry the identity, so layouts can stay simple and mostly empty.</p></li>
+        <li><h3 class="t-h3">Open to every student.</h3><p>Readers range from first-years to sponsors and faculty. Plain words, high contrast, no gatekeeping jargon.</p></li>
+        <li><h3 class="t-h3">Spectacle has a budget.</h3><p>One big light moment per page. Every animation has a still fallback and a lighter version for weak phones.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- COLOR -->
+<section class="sec" id="color">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Color</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Black stage. Spectrum light.</h2>
+      <div class="strip" aria-hidden="true"></div>
+      <p class="sec__intro">Neutrals do 95% of the work. The spectrum comes straight from the reference beams: cold ion blue, hot ember orange, white cores, and violet and rose fringes. Ratios on each swatch are measured against Void.</p>
+
+      <div class="group"><p class="lbl">Surface</p><div class="swgrid" id="sw-surface"></div></div>
+      <div class="group"><p class="lbl">Text</p><div class="swgrid" id="sw-text"></div></div>
+      <div class="group"><p class="lbl">Spectrum</p><div class="swgrid" id="sw-spectrum"></div></div>
+      <div class="group"><p class="lbl">Semantic</p><div class="swgrid" id="sw-semantic"></div></div>
+
+      <div class="group">
+        <p class="lbl">Color budget outside the hero beams</p>
+        <div class="budget" role="img" aria-label="Color budget: 88 percent void, 9 percent photon, 3 percent spectrum">
+          <div style="flex:88;background:var(--void-900)" class="micro">Void 88%</div>
+          <div style="flex:9;background:var(--photon);color:var(--void-950)" class="micro">Photon 9%</div>
+          <div style="flex:3;background:linear-gradient(90deg,var(--ultraviolet),var(--ion),var(--plasma),var(--ember),var(--rose))"></div>
+        </div>
+        <p class="t-small muted" style="margin-top:12px">Spectrum stays under about 5% of any screen. It should feel rare enough to look bright.</p>
+      </div>
+
+      <div class="group">
+        <p class="lbl">Approved pairings</p>
+        <div class="pairs" id="pairs"></div>
+      </div>
+
+      <ul class="plain">
+        <li><b>Ultraviolet is a fill and a glow, never small text.</b> It reads at 3.9:1 on Void, so it works for shapes and large UI but fails as body copy. Links use Ion.</li>
+        <li><b>Rainbow gradients belong to beams and the strip above.</b> Never across text, never as a card background.</li>
+        <li><b>Color never carries meaning alone.</b> Pair every success, warning or error color with words or an icon.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section class="sec" id="type">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Typography</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Loud headlines. Quiet labels.</h2>
+      <p class="sec__intro">Set from the black-and-white reference: a tight, uppercase grotesque for headlines, a monospace for navigation and labels. I matched the fonts by eye, so treat them as close stand-ins.</p>
+
+      <div class="fam">
+        <div><span class="lbl muted">Display</span><span class="big" style="font-family:var(--font-display);font-weight:500;letter-spacing:-.03em">Aa</span><span class="t-small muted">Inter Tight 500. Headlines, uppercase, tight tracking.</span></div>
+        <div><span class="lbl muted">Body</span><span class="big" style="font-family:var(--font-body)">Aa</span><span class="t-small muted">Inter 400. Paragraphs and UI text, sentence case.</span></div>
+        <div><span class="lbl muted">Mono</span><span class="big" style="font-family:var(--font-mono)">Aa</span><span class="t-small muted">JetBrains Mono 500. Nav, labels, section markers, buttons.</span></div>
+      </div>
+
+      <div>
+        <div class="trow"><div class="meta"><span class="lbl">Display XL</span><span class="micro">Inter Tight 500</span><span class="micro">52 to 150px, 0.9, -3.5%</span></div><div class="sample t-display-xl">Light speed</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">Display</span><span class="micro">Inter Tight 500</span><span class="micro">44 to 104px, 0.94, -3%</span></div><div class="sample t-display">Hack night</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">H1</span><span class="micro">Inter Tight 500</span><span class="micro">34 to 64px, 0.98, -2.5%</span></div><div class="sample t-h1">Build in the dark</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">H2</span><span class="micro">Inter Tight 500</span><span class="micro">26 to 40px, 1.05, -2%</span></div><div class="sample t-h2">Join the committee</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">H3</span><span class="micro">Inter Tight 500, sentence case</span><span class="micro">24px, 1.15, -1%</span></div><div class="sample t-h3">Workshops, talks and late-night builds</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">Body L</span><span class="micro">Inter 400</span><span class="micro">20px, 1.55</span></div><div class="sample t-body-l" style="max-width:60ch">The committee runs workshops, hack nights and talks for students who like to build things.</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">Body</span><span class="micro">Inter 400</span><span class="micro">17px, 1.6, max 65ch</span></div><div class="sample" style="max-width:65ch">Bring a laptop and an idea. No experience needed for the first session; mentors from the final-year team will pair with you.</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">Small</span><span class="micro">Inter 400</span><span class="micro">14px, 1.5</span></div><div class="sample t-small">Room 204, Block B. Doors open at 5:30 PM.</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">Label</span><span class="micro">JetBrains Mono 500</span><span class="micro">13px, +8%, uppercase</span></div><div class="sample lbl">Register now</div></div>
+        <div class="trow"><div class="meta"><span class="lbl">Micro</span><span class="micro">JetBrains Mono 400</span><span class="micro">12px, +10%, uppercase</span></div><div class="sample micro">Draft v0.1</div></div>
+      </div>
+
+      <ul class="plain">
+        <li><b>Uppercase for headlines and labels only.</b> Write copy in sentence case and let CSS do the capitals, so screen readers and translations behave.</li>
+        <li><b>Paragraphs stay sentence case.</b> The reference sets whole paragraphs in caps. It looks striking but slows reading, so we keep that for one-line statements.</li>
+        <li><b>Section marker.</b> A backslash and a mono label sets each section apart (see the labels on this page). Use it for wayfinding, not decoration.</li>
+        <li><b>Left-aligned, ragged right.</b> Never justify. Center only single-line moments.</li>
+        <li><b>Line length.</b> Body copy stays under 65 characters per line.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- LAYOUT -->
+<section class="sec" id="layout">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Spacing and layout</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Mostly empty, on purpose.</h2>
+      <p class="sec__intro">Light needs darkness around it. Generous space makes the beams and the headlines feel bigger.</p>
+
+      <div class="group">
+        <p class="lbl">Spacing scale, 4px base</p>
+        <ul class="space" id="space"></ul>
+      </div>
+
+      <div class="group">
+        <p class="lbl">Editorial split on a 12-column grid</p>
+        <div class="wire" role="img" aria-label="Wireframe: label in columns 1 to 2, headline in columns 3 to 8, body in columns 9 to 12">
+          <div class="wire__cols" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="wire__blocks">
+            <div class="b-label micro">Label<br>cols 1 to 2</div>
+            <div class="b-head micro">Headline, uppercase display<br>cols 3 to 8</div>
+            <div class="b-body micro">Body and action<br>cols 9 to 12</div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="plain">
+        <li><b>Grid.</b> 12 columns, 24px gutter (16px under 768px), side margins 20 to 64px, content max width 1440px.</li>
+        <li><b>Breakpoints.</b> 480, 768, 1024, 1280, 1536. Design mobile first; the beam layer shrinks before the layout does.</li>
+        <li><b>Section rhythm.</b> 96px between sections on desktop, 64px on mobile. Use 1px hairlines to separate, not boxes.</li>
+        <li><b>Alignment.</b> Left aligned. Labels sit left, headlines in the middle, supporting copy on the right.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SHAPE + ICONS -->
+<section class="sec" id="shape">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Shape, depth, icons</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Sharp edges. Soft glow.</h2>
+      <p class="sec__intro">Corners are square and borders are hairlines. Depth comes from light spilling out of an element, never from a grey drop shadow.</p>
+
+      <div class="panels">
+        <div class="panel hair"><span class="lbl">Hairline</span><span class="t-small muted">1px, white at 12%. Default separation.</span></div>
+        <div class="panel g-ion"><span class="lbl">Glow / Ion</span><span class="t-small muted">Focus, active, live states.</span></div>
+        <div class="panel g-uv"><span class="lbl">Glow / Ultraviolet</span><span class="t-small muted">The single key action on a screen.</span></div>
+      </div>
+      <ul class="plain">
+        <li><b>Radius.</b> 0 for everything. The only round shapes are status dots and avatars (<code style="font-family:var(--font-mono)">--radius-pill</code>).</li>
+        <li><b>Glow budget.</b> At most one glowing element per viewport, except beams.</li>
+        <li><b>Grain.</b> A faint 6% film grain sits over the whole page, taken from the black reference. It stops big black areas looking flat.</li>
+      </ul>
+
+      <div class="group">
+        <p class="lbl">Icon style</p>
+        <div class="icons" id="icons" aria-label="Icon samples"></div>
+        <p class="t-small muted" style="margin-top:12px">24px grid, 1.5px stroke, square caps, mitered joins, no fills. Sizes 16, 20, 24, 32. Color: Photon, or Ion when active. Draw custom icons to match, or use an open-source set with the same stroke.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MOTION -->
+<section class="sec" id="motion">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Motion</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Light moves. Content doesn't.</h2>
+      <p class="sec__intro">Beams have three speeds. The same engine drives the hero above and the demo below. Try each state.</p>
+
+      <div>
+        <div class="stage">
+          <canvas id="demoCanvas" aria-hidden="true"></canvas>
+          <p class="read micro" id="demoRead" aria-live="polite">State idle, speed 0.12</p>
+        </div>
+        <div class="seg" role="group" aria-label="Beam speed">
+          <button class="btn is-on" type="button" data-speed="idle">Idle</button>
+          <button class="btn" type="button" data-speed="cruise">Cruise</button>
+          <button class="btn" type="button" data-speed="warp">Warp</button>
+        </div>
+      </div>
+
+      <div class="tok-wrap">
+        <table class="tok">
+          <thead><tr><th>State</th><th>Use it for</th></tr></thead>
+          <tbody>
+            <tr><td>Idle, 0.12</td><td>Default ambient background. Slow drift you barely notice.</td></tr>
+            <tr><td>Cruise, 0.45</td><td>Responding to an action: hovering the main call to action, scrolling a hero.</td></tr>
+            <tr><td>Warp, 2.0</td><td>Page transitions only, up to 1.2s, then back to idle. Never on load, never repeated.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tok-wrap">
+        <table class="tok">
+          <thead><tr><th>Token</th><th>Value and use</th></tr></thead>
+          <tbody>
+            <tr><td>--dur-instant</td><td>90ms. Press feedback.</td></tr>
+            <tr><td>--dur-fast</td><td>160ms. Hover, color change.</td></tr>
+            <tr><td>--dur-base</td><td>280ms. Open, close, expand.</td></tr>
+            <tr><td>--dur-slow</td><td>560ms. Reveals and large elements.</td></tr>
+            <tr><td>--dur-scene</td><td>1200ms. Page transition with warp.</td></tr>
+            <tr><td>--ease-snap</td><td>cubic-bezier(.2,.8,.2,1). Default for interface motion: quick start, soft landing.</td></tr>
+            <tr><td>--ease-warp</td><td>cubic-bezier(.7,0,.3,1). Speed changes and transitions.</td></tr>
+            <tr><td>--ease-beam</td><td>linear. Beams only; light doesn't ease.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cols2">
+        <div>
+          <h3 class="t-h3">Beam recipe</h3>
+          <ul class="plain">
+            <li><b>Origin.</b> One vanishing point, placed off-center so text has room. Streaks fly outward.</li>
+            <li><b>Mix.</b> About 26% ion, 22% ember, 20% white, 12% ultraviolet, 10% plasma, 6% rose, 4% amber.</li>
+            <li><b>Render.</b> Additive blending, a wide soft stroke under a thin bright core, brighter and thicker as they near the edge.</li>
+            <li><b>Cost.</b> About 240 streaks on desktop, about 110 on phones, pixel ratio capped at 2.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="t-h3">Rules</h3>
+          <ul class="plain">
+            <li><b>Ambient motion is slow;</b> responsive motion is fast.</li>
+            <li><b>One orchestrated moment</b> per page. No scattered fade-ins on every block.</li>
+            <li><b>Always pausable.</b> A visible pause control, and beams stop when off-screen or the tab is hidden.</li>
+            <li><b>Reduced motion means a still frame,</b> not a blank background.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACCESSIBILITY -->
+<section class="sec" id="access">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Accessibility</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Readable over anything.</h2>
+      <p class="sec__intro">Bright beams are the biggest legibility risk in this concept. Text never sits on raw light.</p>
+
+      <div class="legi">
+        <figure><div class="art"><p>Hack night starts at six</p></div><figcaption><span class="tag no lbl">Fail</span><span class="t-small muted">Text crossing a bright beam. The letters vanish where the core passes behind them.</span></figcaption></figure>
+        <figure><div class="art scrim"><p>Hack night starts at six</p></div><figcaption><span class="tag ok lbl">Pass</span><span class="t-small muted">Same beam behind a Void scrim. Light stays visible at the edge, text stays readable.</span></figcaption></figure>
+      </div>
+
+      <ul class="plain">
+        <li><b>Contrast.</b> Body text 4.5:1 or better, large text and UI shapes 3:1. Photon on Void is 18.6:1; keep Dim for text of 14px and up.</li>
+        <li><b>Scrims.</b> Any text over the beam layer gets a Void gradient behind it at 70% or more opacity where the text sits.</li>
+        <li><b>Focus.</b> 2px Ion outline with 3px offset on every interactive element. Never remove it.</li>
+        <li><b>Motion.</b> Respect <code style="font-family:var(--font-mono)">prefers-reduced-motion</code>. Nothing flashes more than 3 times per second; beams stream, they don't strobe.</li>
+        <li><b>Touch targets.</b> At least 44 by 44px.</li>
+        <li><b>Not by color alone.</b> Status uses color plus a word or icon.</li>
+        <li><b>Small mono labels.</b> Minimum 12px, always with the extra tracking, never Dim on a lighter surface.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- VOICE -->
+<section class="sec" id="voice">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Voice and tone</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Short, direct, welcoming.</h2>
+
+      <div class="pillars">
+        <div><h3 class="t-h3">Direct</h3><p>Say what happens, when and where. Lead with the fact.</p></div>
+        <div><h3 class="t-h3">Welcoming</h3><p>A first-year should feel invited, not tested.</p></div>
+        <div><h3 class="t-h3">Technical, not gatekeeping</h3><p>Use real terms, explain them once, never sneer at beginners.</p></div>
+        <div><h3 class="t-h3">Energetic, not shouty</h3><p>The type is already loud. The words can be calm.</p></div>
+      </div>
+
+      <div>
+        <div class="say"><span class="lbl ctx">Button</span><div class="yes"><span class="tag ok lbl" style="justify-self:start">Say</span><p>Join the committee</p></div><div class="no"><span class="tag no lbl" style="justify-self:start">Not</span><p>Submit</p></div></div>
+        <div class="say"><span class="lbl ctx">Event</span><div class="yes"><span class="tag ok lbl" style="justify-self:start">Say</span><p>Hack night. Friday, 6 PM, Lab 3. Bring a laptop.</p></div><div class="no"><span class="tag no lbl" style="justify-self:start">Not</span><p>Get ready for an EPIC hackathon experience!!!</p></div></div>
+        <div class="say"><span class="lbl ctx">Error</span><div class="yes"><span class="tag ok lbl" style="justify-self:start">Say</span><p>That email isn't registered. Use your college email.</p></div><div class="no"><span class="tag no lbl" style="justify-self:start">Not</span><p>Oops! Something went wrong.</p></div></div>
+        <div class="say"><span class="lbl ctx">Empty</span><div class="yes"><span class="tag ok lbl" style="justify-self:start">Say</span><p>No events scheduled. New dates are posted on the 1st.</p></div><div class="no"><span class="tag no lbl" style="justify-self:start">Not</span><p>Nothing to see here.</p></div></div>
+      </div>
+
+      <ul class="plain">
+        <li><b>Name actions by what happens.</b> "Register", "Join", "Download slides". Keep the same name through the whole flow.</li>
+        <li><b>Errors don't apologize or blame.</b> They say what went wrong and how to fix it.</li>
+        <li><b>Punctuation.</b> Full stops on headlines are welcome, exclamation marks are rare, emoji stay out of the interface.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- DO / DON'T -->
+<section class="sec" id="check">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Quick check</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Do. Don't.</h2>
+      <div class="cols2">
+        <div>
+          <h3 class="t-h3">Do</h3>
+          <ul class="plain">
+            <li>Keep the reading area dark and push the brightest light to the edges.</li>
+            <li>Use Photon for text and spectrum only for light.</li>
+            <li>Give each screen one Ultraviolet action.</li>
+            <li>Set headlines in uppercase display and paragraphs in sentence case.</li>
+            <li>Ship every animation with a still fallback.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="t-h3">Don't</h3>
+          <ul class="plain">
+            <li>Put text on a bright beam without a scrim.</li>
+            <li>Fill cards or large surfaces with spectrum color.</li>
+            <li>Run a rainbow gradient through text.</li>
+            <li>Add rounded corners, grey drop shadows or white surfaces.</li>
+            <li>Flash, strobe or loop warp speed.</li>
+            <li>Set paragraphs in all caps.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOKENS -->
+<section class="sec" id="tokens-sec">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Tokens</p>
+    <div class="sec__body">
+      <h2 class="t-h1">Copy these first.</h2>
+      <p class="sec__intro">This is the exact block this page runs on, read live from its own stylesheet.</p>
+      <div class="row-end">
+        <span class="lbl muted">CSS custom properties</span>
+        <button class="btn" type="button" id="copyBtn">Copy tokens</button>
+      </div>
+      <pre class="code" id="tokenCode" tabindex="0" aria-label="CSS design tokens">Tokens load with JavaScript.</pre>
+    </div>
+  </div>
+</section>
+
+<!-- NEXT -->
+<section class="sec" id="next">
+  <div class="wrap sec__grid">
+    <p class="sec__label lbl">\ Still open</p>
+    <div class="sec__body">
+      <h2 class="t-h1">To decide next.</h2>
+      <ul class="plain">
+        <li><b>Committee name and logo.</b> The wordmark in the header is a placeholder.</li>
+        <li><b>Fonts.</b> Confirm Inter Tight, Inter and JetBrains Mono, or pick closer matches to the reference.</li>
+        <li><b>Primary accent.</b> Ultraviolet is proposed. Ion is the alternative.</li>
+        <li><b>Hero engine.</b> This draft uses a 2D canvas. WebGL would allow richer bloom at a higher performance cost.</li>
+        <li><b>Next phase.</b> Components and page patterns, once this direction is approved.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap"><p class="lbl">\ Laser Spectrum, v0.1</p></div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var root = document.documentElement;
+  var css = getComputedStyle(root);
+  var num = function(n, fb){ var v = parseFloat(css.getPropertyValue(n)); return isNaN(v) ? fb : v; };
+
+  /* ---------- contrast helpers ---------- */
+  function lin(v){ v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); }
+  function lum(h){ var n=parseInt(h.slice(1),16); return 0.2126*lin(n>>16&255)+0.7152*lin(n>>8&255)+0.0722*lin(n&255); }
+  function cr(a,b){ var A=lum(a),B=lum(b); return (Math.max(A,B)+0.05)/(Math.min(A,B)+0.05); }
+  function grade(r){ return r>=7?'AAA':r>=4.5?'AA':r>=3?'AA large':'Below AA'; }
+
+  var VOID='#05050A', PHOTON='#F5F5F2';
+  var swatches = {
+    surface:[
+      {n:'Void',t:'--void-950',h:'#05050A',r:'Page background'},
+      {n:'Void 900',t:'--void-900',h:'#0A0A10',r:'Raised sections, code'},
+      {n:'Void 800',t:'--void-800',h:'#12121A',r:'Panels, wells'},
+      {n:'Void 700',t:'--void-700',h:'#1B1B26',r:'Hover, pressed surfaces'}
+    ],
+    text:[
+      {n:'Photon',t:'--photon',h:'#F5F5F2',r:'Headlines and body'},
+      {n:'Mist',t:'--mist',h:'#A4A4B8',r:'Secondary text'},
+      {n:'Dim',t:'--dim',h:'#7C7C92',r:'Captions, 14px and up'}
+    ],
+    spectrum:[
+      {n:'Ultraviolet',t:'--ultraviolet',h:'#7443FF',r:'Key action fill, glow. Not text.',glow:1},
+      {n:'Ion',t:'--ion',h:'#2CA6FF',r:'Focus, links, info, cold beams',glow:1},
+      {n:'Plasma',t:'--plasma',h:'#4DE3D0',r:'Success, cool highlights',glow:1},
+      {n:'Amber',t:'--amber',h:'#FFC247',r:'Warning, warm highlights',glow:1},
+      {n:'Ember',t:'--ember',h:'#FF7A1A',r:'Hot states, warm beams',glow:1},
+      {n:'Rose',t:'--rose',h:'#FF4FA3',r:'Beam fringe. Use sparingly.',glow:1}
+    ],
+    semantic:[
+      {n:'Success',t:'--success',h:'#4DE3D0',r:'Alias of Plasma'},
+      {n:'Warning',t:'--warning',h:'#FFC247',r:'Alias of Amber'},
+      {n:'Error',t:'--error',h:'#FF5A5F',r:'Errors, destructive actions'},
+      {n:'Info',t:'--info',h:'#2CA6FF',r:'Alias of Ion'}
+    ]
+  };
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  Object.keys(swatches).forEach(function(k){
+    var host = document.getElementById('sw-'+k); if(!host) return;
+    host.innerHTML = swatches[k].map(function(s){
+      var onVoid = cr(s.h,VOID);
+      var ink = cr(s.h,VOID) >= cr(s.h,PHOTON) ? '#05050A' : '#F5F5F2';
+      var dark = k==='surface';
+      var style = 'background:'+s.h+';color:'+(dark?PHOTON:ink)+(s.glow?';box-shadow:0 0 34px '+s.h+'40':'');
+      return '<div class="sw" style="'+style+'"><p class="name">'+esc(s.n)+'</p><dl>'+
+        '<dt class="micro">'+esc(s.t)+'</dt><dd class="micro">'+esc(s.h)+'</dd>'+
+        '<dd class="role">'+esc(s.r)+'</dd>'+
+        '<dd><span class="grade micro">'+onVoid.toFixed(1)+':1 '+grade(onVoid)+'</span></dd></dl></div>';
+    }).join('');
+  });
+
+  var pairs = [
+    ['Photon on Void','#F5F5F2','#05050A','Body text, headlines'],
+    ['Mist on Void','#A4A4B8','#05050A','Secondary text'],
+    ['Dim on Void 800','#7C7C92','#12121A','Captions on panels, 14px and up'],
+    ['Void on Photon','#05050A','#F5F5F2','Primary button'],
+    ['Photon on Ultraviolet','#F5F5F2','#7443FF','Key action button'],
+    ['Ion on Void','#2CA6FF','#05050A','Links, focus rings'],
+    ['Ember on Void','#FF7A1A','#05050A','Hot state text, warnings']
+  ];
+  document.getElementById('pairs').innerHTML = pairs.map(function(p){
+    var r = cr(p[1],p[2]);
+    return '<div class="pair"><div class="aa" style="color:'+p[1]+';background:'+p[2]+'">Aa</div>'+
+      '<div><p class="lbl">'+esc(p[0])+'</p><p class="t-small use">'+esc(p[3])+'</p></div>'+
+      '<div class="ratio"><p class="lbl">'+r.toFixed(1)+':1</p><p class="micro muted">'+grade(r)+'</p></div></div>';
+  }).join('');
+
+  /* ---------- spacing ---------- */
+  var sp = [['--s-1',4,'Icon gaps'],['--s-2',8,'Tight groups'],['--s-3',12,'Label to content'],['--s-4',16,'Default gap'],['--s-5',24,'Gutter, card padding'],['--s-6',32,'Block gaps'],['--s-7',48,'Between groups'],['--s-8',64,'Mobile section rhythm'],['--s-9',96,'Desktop section rhythm'],['--s-10',128,'Hero breathing room']];
+  document.getElementById('space').innerHTML = sp.map(function(s){
+    return '<li><span class="micro">'+s[0]+'</span><span class="micro muted">'+s[1]+'px</span><span style="display:flex;align-items:center;gap:12px"><span class="bar-s" style="width:'+s[1]+'px;max-width:60%"></span><span class="t-small use">'+s[2]+'</span></span></li>';
+  }).join('');
+
+  /* ---------- icons ---------- */
+  var icons = [
+    ['Arrow', '<path d="M7 17 17 7M8 7h9v9"/>'],
+    ['Add', '<path d="M12 5v14M5 12h14"/>'],
+    ['Event', '<rect x="4" y="5" width="16" height="15"/><path d="M4 10h16M9 3v4M15 3v4"/>'],
+    ['Code', '<path d="M9 7 4 12l5 5M15 7l5 5-5 5"/>'],
+    ['Team', '<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 5a3.5 3.5 0 0 1 0 6.5M18 14c2 .8 3 2.7 3 6"/>'],
+    ['Terminal', '<rect x="3" y="4" width="18" height="16"/><path d="m7 9 3 3-3 3M13 15h4"/>']
+  ];
+  document.getElementById('icons').innerHTML = icons.map(function(i){
+    return '<div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true">'+i[1]+'</svg><span class="micro muted">'+i[0]+'</span></div>';
+  }).join('');
+
+  /* ---------- tokens block ---------- */
+  var src = document.getElementById('tokens');
+  var pre = document.getElementById('tokenCode');
+  if(src && pre){ pre.textContent = src.textContent.trim().replace(/^\s{2}/gm,'  '); }
+  var copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', function(){
+    var text = pre.textContent, done = function(){ copyBtn.textContent='Copied'; setTimeout(function(){copyBtn.textContent='Copy tokens';},1600); };
+    var fallback = function(){ var r=document.createRange(); r.selectNodeContents(pre); var s=getSelection(); s.removeAllRanges(); s.addRange(r); copyBtn.textContent='Selected, press copy'; };
+    try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, fallback); } else { fallback(); } }
+    catch(e){ fallback(); }
+  });
+
+  /* ---------- beam engine ---------- */
+  var SPECTRUM = [
+    {c:[44,166,255],w:26},{c:[255,122,26],w:22},{c:[245,245,242],w:20},
+    {c:[116,67,255],w:12},{c:[77,227,208],w:10},{c:[255,79,163],w:6},{c:[255,194,71],w:4}
+  ];
+  function pick(){ var r=Math.random()*100, a=0; for(var i=0;i<SPECTRUM.length;i++){ a+=SPECTRUM[i].w; if(r<a) return SPECTRUM[i].c; } return SPECTRUM[0].c; }
+
+  var SPEEDS = { idle:num('--beam-idle',.12), cruise:num('--beam-cruise',.45), warp:num('--beam-warp',2) };
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var globalPaused = reduced.matches;
+  var engines = [];
+
+  function Warp(canvas, o){
+    this.cv=canvas; this.ctx=canvas.getContext('2d');
+    this.o=o; this.speed=SPEEDS.idle; this.target=SPEEDS.idle;
+    this.vis=true; this.raf=0; this.last=0; this.streaks=[];
+    var self=this;
+    this.resize();
+    if('ResizeObserver' in window){ new ResizeObserver(function(){ self.resize(); }).observe(canvas); }
+    else { window.addEventListener('resize', function(){ self.resize(); }); }
+    if('IntersectionObserver' in window){ new IntersectionObserver(function(e){ self.vis=e[0].isIntersecting; self.sync(); },{threshold:0}).observe(canvas); }
+  }
+  Warp.prototype.spawn = function(s, initial){
+    var a=Math.random()*6.2832, d=0.04+Math.pow(Math.random(),0.7)*1.6;
+    s.ex=Math.cos(a)*d; s.ey=Math.sin(a)*d;
+    s.z = initial ? 0.03+Math.random()*0.97 : 1;
+    s.v=0.6+Math.random()*0.9; s.c=pick(); s.w=0.6+Math.random()*1.4;
+    return s;
+  };
+  Warp.prototype.resize = function(){
+    var r=this.cv.getBoundingClientRect(); if(!r.width||!r.height) return;
+    var dpr=Math.min(window.devicePixelRatio||1,2); this.dpr=dpr;
+    this.w=Math.round(r.width*dpr); this.h=Math.round(r.height*dpr);
+    this.cv.width=this.w; this.cv.height=this.h;
+    var narrow=r.width<700;
+    this.cx=this.w*(narrow?0.5:this.o.vx); this.cy=this.h*(narrow?Math.min(this.o.vy,0.36):this.o.vy);
+    this.k=Math.min(this.w,this.h)*0.1;
+    var n=Math.round(this.o.count*(narrow?0.46:1)); this.streaks=[];
+    for(var i=0;i<n;i++) this.streaks.push(this.spawn({},true));
+    this.draw(0);
+  };
+  Warp.prototype.draw = function(dt){
+    var ctx=this.ctx, w=this.w, h=this.h, cx=this.cx, cy=this.cy, k=this.k, dpr=this.dpr;
+    this.speed += (this.target-this.speed)*Math.min(1,dt*3);
+    ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle='#05050A'; ctx.fillRect(0,0,w,h);
+    var g=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.min(w,h)*0.5);
+    g.addColorStop(0,'rgba(90,110,255,.16)'); g.addColorStop(1,'rgba(5,5,10,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    var tau=0.12+this.speed*0.25;
+    for(var i=0;i<this.streaks.length;i++){
+      var s=this.streaks[i];
+      if(dt>0) s.z -= this.speed*s.v*dt;
+      var x1=cx+s.ex/s.z*k, y1=cy+s.ey/s.z*k;
+      if(s.z<=0.02 || x1<-80 || x1>w+80 || y1<-80 || y1>h+80){ this.spawn(s,false); continue; }
+      var z2=s.z*(1+tau*s.v), x0=cx+s.ex/z2*k, y0=cy+s.ey/z2*k;
+      var near=1-s.z, a=Math.min(1,near*1.7); if(a<=0.02) continue;
+      var lw=(0.6+near*2.6)*s.w*dpr, c=s.c;
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1);
+      ctx.strokeStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+(a*0.13).toFixed(3)+')'; ctx.lineWidth=lw*6; ctx.stroke();
+      var m=[Math.round(c[0]+(255-c[0])*.35),Math.round(c[1]+(255-c[1])*.35),Math.round(c[2]+(255-c[2])*.35)];
+      ctx.strokeStyle='rgba('+m[0]+','+m[1]+','+m[2]+','+a.toFixed(3)+')'; ctx.lineWidth=lw; ctx.stroke();
+    }
+  };
+  Warp.prototype.tick = function(t){
+    var dt=this.last?Math.min(0.05,(t-this.last)/1000):0.016; this.last=t;
+    this.draw(dt);
+    this.raf=requestAnimationFrame(this.tick.bind(this));
+  };
+  Warp.prototype.sync = function(){
+    var should = !globalPaused && this.vis && !document.hidden;
+    if(should && !this.raf){ this.last=0; this.raf=requestAnimationFrame(this.tick.bind(this)); }
+    else if(!should && this.raf){ cancelAnimationFrame(this.raf); this.raf=0; }
+  };
+
+  var hero = new Warp(document.getElementById('heroCanvas'), {count:260, vx:.7, vy:.42});
+  var demo = new Warp(document.getElementById('demoCanvas'), {count:220, vx:.5, vy:.5});
+  engines.push(hero, demo);
+  function syncAll(){ engines.forEach(function(e){ e.sync(); }); }
+  document.addEventListener('visibilitychange', syncAll);
+
+  /* pause control */
+  var btn = document.getElementById('motionBtn');
+  function paintBtn(){ btn.textContent = globalPaused ? 'Play beams' : 'Pause beams'; btn.setAttribute('aria-pressed', String(globalPaused)); }
+  btn.addEventListener('click', function(){ globalPaused=!globalPaused; paintBtn(); syncAll(); readout(); });
+  reduced.addEventListener && reduced.addEventListener('change', function(e){ globalPaused=e.matches; paintBtn(); syncAll(); readout(); });
+  paintBtn(); syncAll();
+
+  /* speed demo */
+  var state='idle', read=document.getElementById('demoRead');
+  function readout(){
+    read.textContent='State '+state+', speed '+SPEEDS[state]+(globalPaused?'. Beams paused.':'');
+  }
+  var segBtns = document.querySelectorAll('[data-speed]');
+  segBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      state=b.getAttribute('data-speed'); demo.target=SPEEDS[state];
+      segBtns.forEach(function(x){ x.classList.toggle('is-on', x===b); });
+      readout();
+    });
+  });
+  readout();
+})();
+</script>
+</body>
+</html>
