@@ -1,7 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Github, Globe, MapPin, Users } from 'lucide-react';
 import { projects, insights } from './data/homepage';
+import { useScrollReveal } from './JointHomepage';
 
 function useRouteTitle(title: string) {
   const { pathname } = useLocation();
@@ -18,66 +19,109 @@ export function ScrollToTop() {
   return null;
 }
 
-function PageHero({ eyebrow, title, lead }: { eyebrow: string; title: ReactNode; lead: string }) {
+/* Chapter numerals mirror the immersive scene's chapters: the site reads as
+   one continuous walk, and every page is a stop on it. */
+const CHAPTER: Record<string, string> = {
+  about: '01', projects: '02', events: '03', team: '04', contact: '05',
+};
+
+function PageHero({ eyebrow, title, lead, stat }: { eyebrow: string; title: ReactNode; lead: string; stat?: string }) {
+  const { pathname } = useLocation();
+  const chapter = CHAPTER[pathname.replace('/', '')] ?? '··';
   return (
     <section className="page-hero">
-      <div className="site-shell">
-        <p className="eyebrow"><i /> {eyebrow}</p>
-        <h1>{title}</h1>
-        <p className="page-lead">{lead}</p>
+      <span className="ph-ghost" aria-hidden="true">{chapter}</span>
+      <div className="site-shell ph-inner">
+        <p className="ph-kicker reveal"><i /> {eyebrow}</p>
+        <h1 className="reveal">{title}</h1>
+        <p className="page-lead reveal">{lead}</p>
+        {stat && <p className="ph-stat reveal">{stat}</p>}
       </div>
+      <div className="ph-rule" aria-hidden="true" />
     </section>
   );
 }
 
+function SectionHead({ kicker, title, href, hrefLabel }: { kicker: string; title: ReactNode; href?: string; hrefLabel?: string }) {
+  return (
+    <div className="sec-head reveal">
+      <p className="ph-kicker"><i /> {kicker}</p>
+      <div className="sec-head-row">
+        <h2 className="section-title">{title}</h2>
+        {href && (
+          <a className="sec-link" href={href} target="_blank" rel="noopener noreferrer">
+            {hrefLabel} <ArrowUpRight size={15} aria-hidden="true" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ about */
+const pillars = [
+  {
+    n: '01', title: 'National Student Data Corps — DJSCE chapter',
+    body: 'The National Student Data Corps (NSDC), founded by the Northeast Big Data Innovation Hub at Columbia University, builds data-science fluency for students everywhere. Our DJSCE chapter brings that mission to campus: study circles, semester tracks and first steps into data for anyone curious enough to start.',
+  },
+  {
+    n: '02', title: 'Team Informatrix — the tech club',
+    body: 'Team Informatrix is the committee\u2019s building half: a student-run tech club that turns questions into projects — support chatbots, financial dashboards, vision experiments and full web applications, shipped through its public project archive and blog.',
+  },
+  {
+    n: '03', title: 'Why “×”',
+    body: 'One is a gateway into data science; the other is a workshop for building with it. Joined, they give DJSCE students a single path: explore the six domains, learn the craft together, and leave with something you made. Explore data. Build together.',
+  },
+];
+
+const domains = [
+  ['Artificial Intelligence', 'Intelligent systems, language models, responsible AI.'],
+  ['Machine Learning', 'Patterns into models you can test and improve.'],
+  ['Data Science', 'The story inside complex data, told honestly.'],
+  ['Computational Finance', 'Quantitative thinking applied to markets.'],
+  ['Web Development', 'From first sketch to working application.'],
+  ['UI/UX Design', 'Technology made clearer, more useful, more human.'],
+] as const;
+
 export function AboutPage() {
   useRouteTitle('About');
+  useScrollReveal();
   return (
     <main id="main">
       <PageHero
-        eyebrow="ABOUT THE COMMITTEE"
+        eyebrow="CHAPTER 01 · ABOUT"
         title={<>Two teams, <em>one gateway.</em></>}
         lead="NSDC × Informatrix is the shared home of the DJSCE chapter of the National Student Data Corps and Team Informatrix — the college's AI & Data Science community and its tech club, walking the same path."
+        stat="2 teams · 6 domains · 1 path"
       />
       <section className="page-section" aria-label="Who we are">
-        <div className="site-shell prose-grid">
-          <div>
-            <h2>National Student Data Corps — DJSCE chapter</h2>
-            <p>
-              The National Student Data Corps (NSDC), founded by the Northeast Big Data Innovation Hub
-              at Columbia University, builds data-science fluency for students everywhere. Our DJSCE
-              chapter brings that mission to campus: study circles, semester tracks and first steps
-              into data for anyone curious enough to start.
-            </p>
-          </div>
-          <div>
-            <h2>Team Informatrix — the tech club</h2>
-            <p>
-              Team Informatrix is the committee's building half: a student-run tech club that turns
-              questions into projects — support chatbots, financial dashboards, vision experiments and
-              full web applications, shipped through its public project archive and blog.
-            </p>
-          </div>
-          <div>
-            <h2>Why “×”</h2>
-            <p>
-              One is a gateway into data science; the other is a workshop for building with it. Joined,
-              they give DJSCE students a single path: explore the six domains, learn the craft together,
-              and leave with something you made. <em>Explore data. Build together.</em>
-            </p>
+        <div className="site-shell">
+          <SectionHead kicker="WHO WE ARE" title={<>The committee, <em>in three parts.</em></>} />
+          <div className="pillar-grid">
+            {pillars.map(p => (
+              <article className="pillar reveal" key={p.n}>
+                <span className="pillar-n">{p.n}</span>
+                <h3>{p.title}</h3>
+                <p>{p.body}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
       <section className="page-section page-section--alt" aria-label="The six domains">
         <div className="site-shell">
-          <h2 className="section-title">Six domains, one community</h2>
-          <ul className="domain-grid">
-            <li><strong>Artificial Intelligence</strong><span>Intelligent systems, language models, responsible AI.</span></li>
-            <li><strong>Machine Learning</strong><span>Patterns into models you can test and improve.</span></li>
-            <li><strong>Data Science</strong><span>The story inside complex data, told honestly.</span></li>
-            <li><strong>Computational Finance</strong><span>Quantitative thinking applied to markets.</span></li>
-            <li><strong>Web Development</strong><span>From first sketch to working application.</span></li>
-            <li><strong>UI/UX Design</strong><span>Technology made clearer, more useful, more human.</span></li>
+          <SectionHead kicker="THE MAP" title={<>Six domains, <em>one community.</em></>} />
+          <ul className="domain-tiles">
+            {domains.map(([name, desc], i) => (
+              <li className="domain-tile reveal" key={name}>
+                <span className="tile-n">{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <strong>{name}</strong>
+                  <span>{desc}</span>
+                </div>
+                <ArrowUpRight className="tile-arrow" size={16} aria-hidden="true" />
+              </li>
+            ))}
           </ul>
         </div>
       </section>
@@ -85,39 +129,65 @@ export function AboutPage() {
   );
 }
 
-const eventRecords: Record<string, { note: string; image: string; alt: string }> = {
-  hackops: { note: 'Hackathon — build through the night with the committee.', image: '/events/hackops.webp', alt: 'HackOps event artwork' },
-  technograd: { note: 'The committee\'s flagship technology gradation event.', image: '/events/technograd.webp', alt: 'Technograd event artwork' },
-  'technograd-winners': { note: 'Winners celebrated on stage at Technograd.', image: '/globe/technograd-winners.jpg', alt: 'Technograd winners on stage' },
-  'seminar-audience': { note: 'A full seminar room during a committee session.', image: '/globe/seminar-audience.jpg', alt: 'Audience at a committee seminar' },
-  synergy: { note: 'Archive — the synergy of data and building.', image: '/globe/previous/synergy.jpg', alt: 'Synergy event artwork' },
-  'design-dojo': { note: 'Archive — design practice, session after session.', image: '/globe/previous/design-dojo.jpg', alt: 'Design Dojo event artwork' },
-  inauguration: { note: 'Archive — where the chapter began.', image: '/globe/previous/inauguration.jpg', alt: 'Inauguration event artwork' },
-};
+/* ----------------------------------------------------------------- events */
+const FEATURED_EVENTS = [
+  { id: 'hackops', name: 'HackOps', note: 'Hackathon — build through the night with the committee.', image: '/events/hackops.webp', alt: 'HackOps event artwork' },
+  { id: 'technograd', name: 'Technograd', note: 'The committee\u2019s flagship technology gradation event — winners celebrated on stage.', image: '/events/technograd.webp', alt: 'Technograd event artwork' },
+];
+
+const ARCHIVE_EVENTS = [
+  { id: 'technograd-winners', name: 'Technograd — Winners', note: 'Winners celebrated on stage at Technograd.', image: '/globe/technograd-winners.jpg', alt: 'Technograd winners on stage' },
+  { id: 'seminar-audience', name: 'Seminars', note: 'A full seminar room during a committee session.', image: '/globe/seminar-audience.jpg', alt: 'Audience at a committee seminar' },
+  { id: 'synergy', name: 'Synergy', note: 'Archive — the synergy of data and building.', image: '/globe/previous/synergy.jpg', alt: 'Synergy event artwork' },
+  { id: 'design-dojo', name: 'Design Dojo', note: 'Archive — design practice, session after session.', image: '/globe/previous/design-dojo.jpg', alt: 'Design Dojo event artwork' },
+  { id: 'inauguration', name: 'Inauguration', note: 'Archive — where the chapter began.', image: '/globe/previous/inauguration.jpg', alt: 'Inauguration event artwork' },
+];
 
 export function EventsPage() {
   useRouteTitle('Events');
+  useScrollReveal();
   return (
     <main id="main">
       <PageHero
-        eyebrow="EVENTS"
+        eyebrow="CHAPTER 03 · EVENTS"
         title={<>Gatherings on <em>the path.</em></>}
         lead="Sessions, seminars and build nights from the committee. Dates, venues and registration move with each semester — the official committee channels carry the current ones."
+        stat="2 featured gatherings · 5 archive records"
       />
-      <section className="page-section" aria-label="Event gallery">
+      <section className="page-section" aria-label="Featured events">
         <div className="site-shell">
-          <div className="event-grid">
-            {Object.entries(eventRecords).map(([id, ev]) => (
-              <figure className="event-card" key={id}>
+          <SectionHead kicker="FEATURED" title={<>The two big <em>nights.</em></>} />
+          <div className="event-features">
+            {FEATURED_EVENTS.map(ev => (
+              <article className="event-feature reveal" key={ev.id}>
+                <div className="ef-media">
+                  <img src={ev.image} alt={ev.alt} loading="lazy" decoding="async" />
+                  <span className="ef-chip">FEATURED</span>
+                </div>
+                <div className="ef-copy">
+                  <h3>{ev.name}</h3>
+                  <p>{ev.note}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="page-section page-section--alt" aria-label="Event archive">
+        <div className="site-shell">
+          <SectionHead kicker="FROM THE ARCHIVE" title={<>Documented <em>editions.</em></>} />
+          <div className="event-mosaic">
+            {ARCHIVE_EVENTS.map((ev, i) => (
+              <figure className={`mosaic-card reveal${i === 0 ? ' mosaic-lead' : ''}`} key={ev.id}>
                 <img src={ev.image} alt={ev.alt} loading="lazy" decoding="async" />
                 <figcaption>
-                  <strong>{id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</strong>
+                  <strong>{ev.name}</strong>
                   <span>{ev.note}</span>
                 </figcaption>
               </figure>
             ))}
           </div>
-          <p className="page-note">
+          <p className="page-note reveal">
             Verification note: past editions of these gatherings are documented by the committee's own
             photo archive (shown here). Current schedules live with the committee, not on this page —
             nothing invented here.
@@ -128,23 +198,28 @@ export function EventsPage() {
   );
 }
 
+/* --------------------------------------------------------------- projects */
 export function ProjectsPage() {
   useRouteTitle('Projects');
+  useScrollReveal();
   return (
     <main id="main">
       <PageHero
-        eyebrow="PROJECTS"
+        eyebrow="CHAPTER 02 · PROJECTS"
         title={<>Ideas, made <em>real.</em></>}
         lead="Selected student builds from the Informatrix archive — each one a walk through one of the six domains. The full archive lives on the official Informatrix site."
+        stat="4 featured builds · 3 field notes"
       />
       <section className="page-section" aria-label="Project archive highlights">
         <div className="site-shell">
+          <SectionHead kicker="STUDENT BUILDS" title={<>From the <em>workshop.</em></>} />
           <div className="project-grid">
             {projects.map(project => (
-              <article className="project-card" key={project.index}>
+              <article className="project-card reveal" key={project.index}>
+                <span className="pc-glow" aria-hidden="true" />
                 <div className="project-copy">
                   <div className="project-meta">
-                    <span>{project.category}</span>
+                    <span className="pc-cat">{project.category}</span>
                     <span>IM—{project.index}</span>
                   </div>
                   <h3>{project.title}</h3>
@@ -152,26 +227,26 @@ export function ProjectsPage() {
                   <div className="project-card-bottom">
                     <div className="project-tags">{project.tags.slice(0, 3).map(tag => <span key={tag}>{tag}</span>)}</div>
                     <a href={project.href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${project.title} in the Informatrix archive`}>
-                      <ArrowRight size={18} aria-hidden="true" />
+                      <ArrowUpRight size={18} aria-hidden="true" />
                     </a>
                   </div>
                 </div>
               </article>
             ))}
           </div>
-          <p className="page-note">Descriptions are drawn from the committee's existing project records.</p>
         </div>
       </section>
       <section className="page-section page-section--alt" aria-label="Committee reading">
         <div className="site-shell">
-          <h2 className="section-title">From the committee blog</h2>
+          <SectionHead kicker="FROM THE COMMITTEE BLOG" title={<>Field <em>notes.</em></>} />
           <ul className="insight-list">
             {insights.map(insight => (
-              <li key={insight.href}>
+              <li className="reveal" key={insight.href}>
                 <a href={insight.href} target="_blank" rel="noopener noreferrer">
                   <span className="insight-cat">{insight.category}</span>
                   <strong>{insight.title}</strong>
-                  <span>{insight.author} · {insight.date} · {insight.readTime}</span>
+                  <span className="insight-meta">{insight.author} · {insight.date} · {insight.readTime}</span>
+                  <ArrowUpRight className="insight-arrow" size={17} aria-hidden="true" />
                 </a>
               </li>
             ))}
@@ -182,61 +257,99 @@ export function ProjectsPage() {
   );
 }
 
+/* ------------------------------------------------------------------- team */
+const TEAM_FACTS = [
+  ['06', 'domains explored together'],
+  ['04', 'student builds shipped'],
+  ['05', 'documented gatherings'],
+];
+
 export function TeamPage() {
   useRouteTitle('Team');
+  useScrollReveal();
   return (
     <main id="main">
       <PageHero
-        eyebrow="TEAM"
+        eyebrow="CHAPTER 04 · TEAM"
         title={<>The people on <em>the path.</em></>}
         lead="The committee's members, mentors and faculty are listed on the official Informatrix site, which stays in sync with the current teams."
       />
       <section className="page-section" aria-label="Team directory">
-        <div className="site-shell">
-          <a
-            className="team-link"
-            href={`${import.meta.env.VITE_INFO_SITE ?? 'https://djs-infomatrix.vercel.app'}/team`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open the official team directory <ArrowRight size={18} aria-hidden="true" />
-          </a>
-          <p className="page-note">
-            Verification note: this site does not duplicate member names or photographs; it links to the
-            live directory so no identity goes stale or invented here.
-          </p>
+        <div className="site-shell team-panel-wrap">
+          <div className="team-panel reveal">
+            <div className="tp-copy">
+              <span className="tp-icon"><Users size={26} aria-hidden="true" /></span>
+              <h2>One roster, kept <em>honest.</em></h2>
+              <p>
+                Names and photographs change every semester; a copy on this site would go stale or
+                invent people. The committee keeps one live directory instead — this page links
+                straight to it so every face and role you see there is current.
+              </p>
+              <div className="tp-facts">
+                {TEAM_FACTS.map(([n, label]) => (
+                  <div className="tp-fact" key={label}>
+                    <strong>{n}</strong>
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="tp-cta">
+              <a
+                className="committee-cta"
+                href={`${import.meta.env.VITE_INFO_SITE ?? 'https://djs-infomatrix.vercel.app'}/team`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open the official directory <ArrowRight size={16} aria-hidden="true" />
+              </a>
+              <p className="page-note">
+                Verification note: this site does not duplicate member names or photographs; it links
+                to the live directory so no identity goes stale or invented here.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </main>
   );
 }
 
+/* ---------------------------------------------------------------- contact */
 export function ContactPage() {
   useRouteTitle('Contact');
+  useScrollReveal();
   return (
     <main id="main">
       <PageHero
-        eyebrow="CONTACT"
+        eyebrow="CHAPTER 05 · CONTACT"
         title={<>Find the <em>gateway.</em></>}
         lead="Reach the committee through Informatrix's official channels — or find us on campus at DJSCE, Mumbai."
       />
       <section className="page-section" aria-label="Contact channels">
         <div className="site-shell">
+          <SectionHead kicker="CHANNELS" title={<>Three ways <em>in.</em></>} />
           <div className="contact-grid">
-            <a className="contact-card" href="https://djs-infomatrix.vercel.app" target="_blank" rel="noopener noreferrer">
+            <a className="contact-card reveal" href="https://djs-infomatrix.vercel.app" target="_blank" rel="noopener noreferrer">
+              <span className="cc-icon"><Globe size={22} aria-hidden="true" /></span>
               <strong>Informatrix website</strong>
               <span>djs-infomatrix.vercel.app — projects, blogs and the official directory.</span>
+              <span className="cc-go">Visit <ArrowUpRight size={14} aria-hidden="true" /></span>
             </a>
-            <a className="contact-card" href="https://github.com/DJS-INFOMATRIX" target="_blank" rel="noopener noreferrer">
+            <a className="contact-card reveal" href="https://github.com/DJS-INFOMATRIX" target="_blank" rel="noopener noreferrer">
+              <span className="cc-icon"><Github size={22} aria-hidden="true" /></span>
               <strong>GitHub</strong>
               <span>github.com/DJS-INFOMATRIX — the committee's public code.</span>
+              <span className="cc-go">Browse <ArrowUpRight size={14} aria-hidden="true" /></span>
             </a>
-            <div className="contact-card">
+            <div className="contact-card reveal">
+              <span className="cc-icon"><MapPin size={22} aria-hidden="true" /></span>
               <strong>Campus</strong>
               <span>Dwarkadas J. Sanghvi College of Engineering, Mumbai — AI &amp; Data Science department.</span>
+              <span className="cc-go cc-static">Find us on campus</span>
             </div>
           </div>
-          <p className="page-note">
+          <p className="page-note reveal">
             Verification note: a dedicated committee email address is not published on the existing
             sites, so none is listed here. Channels above are the committee's own.
           </p>
@@ -248,15 +361,17 @@ export function ContactPage() {
 
 export function NotFoundPage() {
   useRouteTitle('Not found');
+  useScrollReveal();
   return (
     <main id="main" className="notfound">
+      <span className="nf-ghost" aria-hidden="true">404</span>
       <div className="site-shell">
-        <p className="eyebrow"><i /> 404 — OFF THE PATH</p>
-        <h1>This path is <em>unlit.</em></h1>
-        <p className="page-lead">
+        <p className="ph-kicker reveal"><i /> 404 — OFF THE PATH</p>
+        <h1 className="reveal">This path is <em>unlit.</em></h1>
+        <p className="page-lead reveal">
           The page you were walking towards is not on the map. The gate, as always, is back at the start.
         </p>
-        <Link className="committee-cta" to="/">Back to the gate <ArrowRight size={16} aria-hidden="true" /></Link>
+        <Link className="committee-cta reveal" to="/">Back to the gate <ArrowRight size={16} aria-hidden="true" /></Link>
       </div>
     </main>
   );
